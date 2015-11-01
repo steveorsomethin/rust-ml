@@ -1,0 +1,8 @@
+[package]
+
+name = "rust-ml"
+version = "0.0.1"
+authors = [ "Steve McGuire <steveorsomethin@gmail.com>" ]
+
+[dependencies]
+rand = "0.3"
