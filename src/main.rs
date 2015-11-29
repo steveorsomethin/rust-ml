@@ -7,6 +7,8 @@
 // SLI
 // Cross-machine
 // Heterogenous networks
+
+#![feature(convert)]
 extern crate rand;
 use rand::Rng;
 use std::iter::{repeat};
@@ -218,7 +220,7 @@ impl Network {
     }
 }
 
-fn main() {
+fn run_xor() {
     // A network which computes exclusive-or
     let mut xor_net = Network::new(vec![2, 3, 1]);
 
@@ -231,8 +233,48 @@ fn main() {
 
     xor_net.train(&data);
 
-    println!("{:?}", xor_net.run(&vec![0.0, 0.0]).round()); 
-    println!("{:?}", xor_net.run(&vec![0.0, 1.0]).round()); 
-    println!("{:?}", xor_net.run(&vec![1.0, 1.0]).round()); 
-    println!("{:?}", xor_net.run(&vec![1.0, 0.0]).round()); 
+    println!("{:?}", xor_net.run(&vec![0.0, 0.0]).round());
+    println!("{:?}", xor_net.run(&vec![0.0, 1.0]).round());
+    println!("{:?}", xor_net.run(&vec![1.0, 1.0]).round());
+    println!("{:?}", xor_net.run(&vec![1.0, 0.0]).round());
+}
+
+fn run_dec_to_bin() {
+    fn make_num_vec(num: usize) -> Vec<f32> {
+        let mut result = zero_vec(10);
+        result[num] = 1.0;
+
+        result
+    }
+
+    fn make_bin_vec(num: usize) -> Vec<f32> {
+        (0 .. 4).
+            rev(). // Gotta walk right-to-left due to little endian-ness
+            map(|i| ((num >> i) & 1) as f32).
+            collect()
+    }
+
+    // A network which maps decimals into binary
+    let mut dec_to_bin_net = Network::new(vec![10, 4]);
+
+    let data = (0 .. 10).
+        map(|num| (make_num_vec(num), make_bin_vec(num))).
+        collect();
+
+    dec_to_bin_net.train(&data);
+
+    for i in 0 .. 10 {
+        dec_to_bin_net.run(&make_num_vec(i));
+        let rounded_output = dec_to_bin_net.layers.last().unwrap().borrow().neurons.iter().
+            map(|neuron| neuron.round() as i32).
+            skip_while(|neuron| *neuron == 0).
+            fold(String::new(), |accum, neuron| accum + neuron.to_string().as_str());
+
+        println!("Binary: {:b} Network: {:?}", i, rounded_output);
+    }
+}
+
+fn main() {
+    run_xor();
+    run_dec_to_bin();
 }
